@@ -1,0 +1,14 @@
+#!/bin/bash
+set -eo pipefail
+
+service mysqld start
+
+# Update configuration
+bahmni -i local update-config
+
+# Start Bahmni
+bahmni -i local start
+
+log_root=/var/log
+
+tail -f $log_root/openmrs/* $log_root/openerp/* $log_root/bahmni-*/*
