@@ -3,9 +3,6 @@ set -eo pipefail
 
 service mysqld start
 
-# Update configuration
-bahmni -i local update-config
-
 # Start Bahmni
 bahmni -i local start
 
