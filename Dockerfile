@@ -36,7 +36,12 @@ RUN bahmni --implementation_play=/var/www/bahmni_config/playbooks/all.yml -i loc
 
 RUN ln -s /etc/bahmni-installer/bahmni.conf /etc/bahmni-installer/bahmni-emr-installer.conf
 
-RUN su -s /bin/bash bahmni && /usr/bin/bahmni-batch
+RUN service mysqld start && \
+    su -s /bin/bash bahmni && /usr/bin/bahmni-batch
+
+# Remove the duplicate reports-user, this duplicate user messes up the Bahmni reporting function.
+RUN service mysqld start && \
+    mysql -u root -ppassword -e "use openmrs; DELETE FROM user_property WHERE user_id = 20; DELETE FROM user_role WHERE user_id = 20; DELETE FROM users WHERE user_id = 20;"
 
 ADD artifacts/bin/start_bahmni /usr/sbin/
 RUN chmod +x /usr/sbin/start_bahmni
