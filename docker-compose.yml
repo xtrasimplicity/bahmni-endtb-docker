@@ -1,0 +1,41 @@
+version: '3.5'
+services:
+  endtb:
+    image: xtrasimplicity/bahmni-endtb-docker:1.5
+    build:
+      context: .
+    hostname: localhost
+    volumes:
+      - mysql:/var/lib/mysql
+      - www:/var/www
+      - home/:/home/bahmni
+      - deployment-artifacts/:/etc/bahmni-installer/deployment-artifacts
+    ports:
+      - 80:80
+      - 443:443
+
+volumes:
+  www:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/data/www
+  mysql:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/data/mysql
+  home:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/data/home
+  deployment-artifacts:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/data/deployment-artifacts
