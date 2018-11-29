@@ -46,7 +46,7 @@ RUN service mysqld start && \
 ADD artifacts/bin/start_bahmni /usr/sbin/
 RUN chmod +x /usr/sbin/start_bahmni
 
-EXPOSE 80 443 8069
+EXPOSE 80 443
 
 VOLUME /var/www /var/log /opt/bahmni-reports/log /opt/openmrs/log /var/lib/mysql /home/bahmni /etc/bahmni-installer/deployment-artifacts /opt/bahmni-certs
 
