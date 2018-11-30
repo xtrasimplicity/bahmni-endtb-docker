@@ -32,15 +32,16 @@ RUN mv /sbin/iptables /sbin/iptables-old && \
 RUN yum clean all && \
     bahmni -i local install
 
+# Remove the duplicate reports-user, this duplicate user messes up the Bahmni reporting function.
+RUN service mysqld start && \
+    mysql -u root -ppassword -e "use openmrs; UPDATE users set password = '29171af2d2cc6b48ab011c6387daa8516960edd0a7fa4e8bc6eaf1aab1d3d15443a82213fb0d11b3071ca73d45f719d885b2fdabcfef03b54b3102af450cd771' WHERE username = 'reports-user'; DELETE FROM users WHERE user_id = 21;"
+
 RUN bahmni --implementation_play=/var/www/bahmni_config/playbooks/all.yml -i local install-impl
 
 RUN ln -s /etc/bahmni-installer/bahmni.conf /etc/bahmni-installer/bahmni-emr-installer.conf
 
-RUN su -s /bin/bash bahmni && /usr/bin/bahmni-batch
-
-# Remove the duplicate reports-user, this duplicate user messes up the Bahmni reporting function.
 RUN service mysqld start && \
-    mysql -u root -ppassword -e "use openmrs; DELETE FROM user_property WHERE user_id = 20; DELETE FROM user_role WHERE user_id = 20; DELETE FROM users WHERE user_id = 20;"
+    sudo su -s /bin/bash bahmni -c "/usr/bin/bahmni-batch"
 
 ADD artifacts/bin/start_bahmni /usr/sbin/
 RUN chmod +x /usr/sbin/start_bahmni
