@@ -34,7 +34,7 @@ RUN yum clean all && \
 
 # Remove the duplicate reports-user, this duplicate user messes up the Bahmni reporting function.
 RUN service mysqld start && \
-    mysql -u root -ppassword -e "use openmrs; UPDATE users set password = '29171af2d2cc6b48ab011c6387daa8516960edd0a7fa4e8bc6eaf1aab1d3d15443a82213fb0d11b3071ca73d45f719d885b2fdabcfef03b54b3102af450cd771' WHERE username = 'reports-user'; DELETE FROM users WHERE user_id = 21;"
+    mysql -u root -ppassword -e "use openmrs; UPDATE users set password = '4b9f5f5619d98e69f9577d53ea4686e6c70d056fdf38d68edda2f9f3ec77317b9e57ad2e19065cd1d1f978d5f15409457c02b16248b5a7449a5b9c161f7d2fd1' WHERE username = 'reports-user'; DELETE FROM users WHERE user_id = 21;"
 
 RUN bahmni --implementation_play=/var/www/bahmni_config/playbooks/all.yml -i local install-impl
 
