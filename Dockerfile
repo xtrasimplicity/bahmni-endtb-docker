@@ -1,17 +1,20 @@
 FROM centos:6.9
 
 RUN yum install -y python-setuptools openssh sudo wget unzip && \
-    yum install -y https://dl.bintray.com/bahmni/rpm/rpms/bahmni-installer-0.85-91.noarch.rpm
+    yum install -y https://dl.bintray.com/bahmni/rpm/rpms/bahmni-installer-0.88-123.noarch.rpm
 
 RUN cd /etc/bahmni-installer/deployment-artifacts && \
-    wget https://github.com/Bahmni/endtb-config/archive/release-0.85.zip && \
-    unzip release-0.85.zip && \
-    mv endtb-config-release-0.85 endtb_config && \
+    wget https://github.com/DWB-eHealth/endtb-config/archive/2.0.3.zip && \
+    unzip 2.0.3.zip && \
+    mv endtb-config-2.0.3 endtb_config && \
     cp endtb_config/dbdump/mysql_dump.sql openmrs_backup.sql
 
-RUN wget https://raw.githubusercontent.com/Bahmni/endtb-config/release-0.85/playbooks/examples/inventory -O /etc/bahmni-installer/local
+RUN wget https://raw.githubusercontent.com/DWB-eHealth/endtb-config/2.0.3/playbooks/examples/inventory -O /etc/bahmni-installer/local
 ADD artifacts/setup.yml /etc/bahmni-installer
 ADD artifacts/jre-7u79-linux-x64.rpm /opt
+
+#Manually patch the Oracle Java playbook due to deprecation of old download links.
+RUN wget https://raw.githubusercontent.com/Bahmni/bahmni-playbooks/release-0.89/roles/oracle-java/defaults/main.yml -O /opt/bahmni-installer/bahmni-playbooks/roles/oracle-java/defaults/main.yml
 
 # Ignore Selinux tasks
 RUN echo '---' > /opt/bahmni-installer/bahmni-playbooks/roles/selinux/tasks/main.yml
@@ -32,13 +35,8 @@ RUN mv /sbin/iptables /sbin/iptables-old && \
 RUN yum clean all && \
     bahmni -i local install
 
-# Remove the duplicate reports-user, this duplicate user messes up the Bahmni reporting function.
-RUN service mysqld start && \
-    mysql -u root -ppassword -e "use openmrs; UPDATE users set password = '4b9f5f5619d98e69f9577d53ea4686e6c70d056fdf38d68edda2f9f3ec77317b9e57ad2e19065cd1d1f978d5f15409457c02b16248b5a7449a5b9c161f7d2fd1' WHERE username = 'reports-user'; DELETE FROM users WHERE user_id = 21;"
 
 RUN bahmni --implementation_play=/var/www/bahmni_config/playbooks/all.yml -i local install-impl
-
-RUN ln -s /etc/bahmni-installer/bahmni.conf /etc/bahmni-installer/bahmni-emr-installer.conf
 
 RUN service mysqld start && \
     sudo su -s /bin/bash bahmni -c "/usr/bin/bahmni-batch"

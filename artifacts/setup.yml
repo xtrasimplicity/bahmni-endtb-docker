@@ -1,5 +1,4 @@
 bahmni_repo_url: https://dl.bintray.com/bahmni/rpm/
 implementation_name: endtb
-timezone: Asia/Kolkata
-omods: ["https://s3.amazonaws.com/endtb-artifacts/1.5/bahmniendtb-1.5-SNAPSHOT.omod", "https://dl.bintray.com/openmrs/omod/dataintegrity-4.0.omod","https://s3.amazonaws.com/endtb-artifacts/1.5/bahmnicore-omod-0.85-SNAPSHOT.omod"]
-bahmniapps_url: http://s3.amazonaws.com/endtb-artifacts/1.5/83.1/bahmniapps.zip
+timezone: Australia/Melbourne
+omods: ["https://s3.amazonaws.com/endtb-artifacts/2.0.0/bahmniendtb-2.0.0.omod", "https://dl.bintray.com/openmrs/omod/dataintegrity-4.2.3.omod", "https://s3.amazonaws.com/endtb-artifacts/1.6/bahmnicore-omod-0.88-SNAPSHOT.omod", "https://github.com/Bahmni/bacteriology/releases/download/1.1/bacteriology-1.1.omod"]
