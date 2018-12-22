@@ -43,6 +43,9 @@ RUN ln -s /etc/bahmni-installer/bahmni.conf /etc/bahmni-installer/bahmni-emr-ins
 RUN service mysqld start && \
     sudo su -s /bin/bash bahmni -c "/usr/bin/bahmni-batch"
 
+# Disable the bahmni_support user
+RUN chsh -s /sbin/nologin bahmni_support
+
 ADD artifacts/bin/start_bahmni /usr/sbin/
 RUN chmod +x /usr/sbin/start_bahmni
 
