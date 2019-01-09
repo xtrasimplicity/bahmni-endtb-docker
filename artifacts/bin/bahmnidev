@@ -1,0 +1,67 @@
+#!/bin/bash
+set -eo pipefail
+
+action=$1
+
+
+warn() {
+  message=$1
+  echo -e "\e[93mWarning: $message\e[0m"
+}
+
+fail_with() {
+  message="${1}"
+  exit_code="${2:-1}" # $2, or default to 1
+
+  echo -e "\e[31mError: $message\e[0m"
+  exit $exit_code
+}
+
+stopMySQL() {
+  service mysqld stop
+}
+
+startMySQLWithoutGrantTables() {
+  mysqld --skip-grant-tables &
+}
+
+case $action in
+  reset-openmrs-credentials)
+    read -p "This will forcefully reset the credentials for the 'admin' and 'superman' users in OpenMRS. Are you sure you want to do this? " -n 1 -r response
+    echo
+
+    if [[ ! $response =~ ^[Yy]$ ]]; then
+      echo "Aborting..."
+      exit
+    fi
+
+    
+    stopMySQL || warn 'Unable to stop MySQL. Is it even running?'
+    startMySQLWithoutGrantTables
+    sleep 3 # TODO: Wait for MySQL to accept connections, rather than waiting for an arbitrary length of time
+    echo "Updating database..."
+    mysql -u root <<SQL
+      use openmrs;
+      SET FOREIGN_KEY_CHECKS = 0;
+      DELETE FROM users WHERE username IN('superman', 'reports-user');
+      INSERT INTO users VALUES(4,'superman','superman','29171af2d2cc6b48ab011c6387daa8516960edd0a7fa4e8bc6eaf1aab1d3d15443a82213fb0d11b3071ca73d45f719d885b2fdabcfef03b54b3102af450cd771','6bc56cf15a664f951134af3451ac806e746215fa3e482b72f08a911e848962bee8b124e672f3cbe8dc7040dc6d8e35960e24a1ffa6150af63d12ba1ce8c07fad','',NULL,1,'2015-08-10 17:50:40',1,'2016-01-04 19:55:38',4,0,NULL,NULL,NULL,'36a1c679-3f5a-11e5-b380-0050568236ae'),(20,'20-8','reports-user','4b9f5f5619d98e69f9577d53ea4686e6c70d056fdf38d68edda2f9f3ec77317b9e57ad2e19065cd1d1f978d5f15409457c02b16248b5a7449a5b9c161f7d2fd1','513bd7a9f797009522b58b90f148867508ceb3fe14f5f2c371465a2977958e6b971ace4672ebe78be3f980ca1828e12fd267e9ca45c2803dfb2960adadac4117','',NULL,4,'2016-03-17 11:07:25',4,'2016-03-17 11:07:25',88,0,NULL,NULL,NULL,'81e5ae47-c91b-4dfb-9896-5922753f26c7');
+SQL
+      echo "Stopping MySQL..."
+      if stopMySQL; then
+        echo "All done!"
+      else
+        fail_with "An error occurred while stopping MySQL. Please try again." 1
+      fi
+  ;;
+  *)
+  cat <<EOF
+  Bahmni helper scripts for development/test environments. Do NOT use this in production!
+
+  Usage: $0 COMMAND [ ARGS ]
+  
+  COMMAND:
+    reset-openmrs-credentials   # Resets the openMRS user credentials to their (unsecure) default values.
+EOF
+  ;;
+esac
+
