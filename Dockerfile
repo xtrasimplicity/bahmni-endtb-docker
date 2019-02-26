@@ -47,7 +47,12 @@ RUN service mysqld start && \
 RUN chsh -s /sbin/nologin bahmni_support
 
 ADD artifacts/bin/start_bahmni /usr/sbin/
-RUN chmod +x /usr/sbin/start_bahmni
+RUN chmod u+x /usr/sbin/start_bahmni
+
+RUN yum install -y gettext
+
+ADD artifacts/bin/update-config /usr/sbin/
+RUN chmod u+x /usr/sbin/update-config
 
 ADD artifacts/bin/bahmnidev /usr/sbin/bahmnidev
 RUN chown root /usr/sbin/bahmnidev && \
@@ -55,6 +60,6 @@ RUN chown root /usr/sbin/bahmnidev && \
 
 EXPOSE 80 443
 
-VOLUME /var/www /var/log /opt/bahmni-reports/log /opt/openmrs/log /var/lib/mysql /home/bahmni /etc/bahmni-installer/deployment-artifacts /opt/bahmni-certs
+VOLUME /var/www /var/log /opt/bahmni-reports/log /opt/openmrs/log /var/lib/mysql /var/lib/bahmni /home/bahmni /etc/bahmni-installer/deployment-artifacts /opt/bahmni-certs
 
 CMD [ "/usr/sbin/start_bahmni" ]

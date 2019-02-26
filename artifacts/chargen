@@ -1,0 +1,5 @@
+#!/bin/bash
+number_of_chars=$([[ -z $1 ]] && echo $1 || echo 128)
+
+echo "Generating a random string of ${number_of_chars} characters."
+cat /dev/urandom | tr -cd 'a-f0-9' | head -c $number_of_chars

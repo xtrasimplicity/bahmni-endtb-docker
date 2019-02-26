@@ -1,0 +1,53 @@
+#!/bin/bash
+set -eo pipefail
+
+retrieve_secret_or_use_default() {
+    # $1 = docker secret name
+    # $2 = default value to return if the docker secret file doesn't exist.
+    secret_name=$1
+    default_value=$2
+    secret_file_path="/run/secrets.env"
+    
+    if [[ ! -f "${secret_file_path}" ]]; then
+      echo $default_value
+    else
+      . "${secret_file_path}"
+
+      secret_value=${!secret_name}
+
+      [[ ! -z "${secret_value}" ]] && echo $secret_value || echo $default_value
+    fi
+}
+
+# Prepare password variables
+mysql_root_password=`retrieve_secret_or_use_default 'MYSQL_ROOT_PASSWORD' 'password'`
+openmrs_db_password=`retrieve_secret_or_use_default 'OPENMRS_DB_PASSWORD' 'password'`
+reports_db_password=`retrieve_secret_or_use_default 'REPORTS_DB_PASSWORD' 'password'`
+
+openmrs_reports_user_password=`retrieve_secret_or_use_default 'OPENMRS_REPORTS_USER_PASSWORD' 'Admin123'`
+
+# Forcefully update MySQL account passwords
+service mysqld stop && echo "Stopped MySQL" || echo "MySQL was not running..."
+mysqld --skip-grant-tables & # We skip the grant tables so that we can avoid mysql root account authentication issues.
+
+echo "Waiting for MySQL to start..."
+until $(echo exit | curl -s telnet://127.0.0.1:3306 > /dev/null); do
+   echo -n '.';
+   sleep 1;
+done
+
+echo "Updating MySQL credentials..."
+mysql -u root <<EOF
+  FLUSH PRIVILEGES;
+  SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${mysql_root_password}');
+  SET PASSWORD FOR 'openmrs-user'@'localhost' = PASSWORD('${openmrs_db_password}');
+  SET PASSWORD FOR 'reports-user'@'localhost' = PASSWORD('${reports_db_password}');
+EOF
+
+service mysqld stop 2>&1 > /dev/null
+
+echo "Updating Bahmni configuration files..."
+sed -i "s/^connection.password=.*/connection.password=${openmrs_db_password}/" /etc/openmrs/openmrs-runtime.properties
+sed -i "s/^openmrs.password=.*/openmrs.password=${openmrs_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
+sed -i "s/^reports.password=.*/reports.password=${reports_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
+sed -i "s/^openmrs.service.password=.*/openmrs.service.password=${openmrs_reports_user_password}/" /etc/bahmni-reports/bahmni-reports.properties

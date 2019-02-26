@@ -10,6 +10,7 @@ services:
       - www:/var/www
       - home/:/home/bahmni
       - deployment-artifacts/:/etc/bahmni-installer/deployment-artifacts
+      - ./secrets.env:/run/secrets.env
     ports:
       - 80:80
       - 443:443
