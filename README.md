@@ -16,6 +16,7 @@ If a `secrets.env` file does not exist, or if a variable has not been defined, t
 MYSQL_ROOT_PASSWORD=
 OPENMRS_DB_PASSWORD=
 REPORTS_DB_PASSWORD=
+OPENELIS_DB_PASSWORD=
 
 OPENMRS_REPORTS_USER_PASSWORD=
 ```
