@@ -2,7 +2,7 @@ services:
  - docker
 
 script:
- - case $TRAVIS_BRANCH
+ - case $TRAVIS_BRANCH in
     v1.5/master)
       image_name=xtrasimplicity/bahmni-endtb-docker:1.5
 
