@@ -1,0 +1,14 @@
+services:
+ - docker
+
+script:
+ - case $TRAVIS_BRANCH in
+    v1.5/master)
+      image_name=xtrasimplicity/bahmni-endtb-docker:1.5
+
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD;
+      docker build . -t $image_name
+      docker push $image_name
+
+     ;;
+   esac
