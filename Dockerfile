@@ -52,7 +52,8 @@ RUN chmod u+x /usr/sbin/start_bahmni
 RUN yum install -y gettext
 
 ADD artifacts/bin/update-config /usr/sbin/
-RUN chmod u+x /usr/sbin/update-config
+RUN chown root /usr/sbin/update-config && \
+    chmod 700 /usr/sbin/update-config
 
 ADD artifacts/bin/bahmnidev /usr/sbin/bahmnidev
 RUN chown root /usr/sbin/bahmnidev && \
