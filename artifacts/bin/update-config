@@ -23,6 +23,7 @@ retrieve_secret_or_use_default() {
 mysql_root_password=`retrieve_secret_or_use_default 'MYSQL_ROOT_PASSWORD' 'password'`
 openmrs_db_password=`retrieve_secret_or_use_default 'OPENMRS_DB_PASSWORD' 'password'`
 reports_db_password=`retrieve_secret_or_use_default 'REPORTS_DB_PASSWORD' 'password'`
+openelis_db_password=`retrieve_secret_or_use_default 'OPENELIS_DB_PASSWORD' 'password'`
 
 openmrs_reports_user_password=`retrieve_secret_or_use_default 'OPENMRS_REPORTS_USER_PASSWORD' 'Admin123'`
 
@@ -48,6 +49,7 @@ service mysqld stop 2>&1 > /dev/null
 
 echo "Updating Bahmni configuration files..."
 sed -i "s/^connection.password=.*/connection.password=${openmrs_db_password}/" /etc/openmrs/openmrs-runtime.properties
+sed -i "s/^openmrs.password=.*/openelis.password=${openelis_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
 sed -i "s/^openmrs.password=.*/openmrs.password=${openmrs_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
 sed -i "s/^reports.password=.*/reports.password=${reports_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
 sed -i "s/^openmrs.service.password=.*/openmrs.service.password=${openmrs_reports_user_password}/" /etc/bahmni-reports/bahmni-reports.properties
