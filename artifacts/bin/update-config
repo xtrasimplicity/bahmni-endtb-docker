@@ -45,11 +45,11 @@ mysql -u root <<EOF
   SET PASSWORD FOR 'reports-user'@'localhost' = PASSWORD('${reports_db_password}');
 EOF
 
-service mysqld stop 2>&1 > /dev/null
+service mysqld stop 2>&1 > /dev/null 
 
 echo "Updating Bahmni configuration files..."
 sed -i "s/^connection.password=.*/connection.password=${openmrs_db_password}/" /etc/openmrs/openmrs-runtime.properties
-sed -i "s/^openmrs.password=.*/openelis.password=${openelis_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
+sed -i "s/^openelis.password=.*/openelis.password=${openelis_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
 sed -i "s/^openmrs.password=.*/openmrs.password=${openmrs_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
 sed -i "s/^reports.password=.*/reports.password=${reports_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
 sed -i "s/^openmrs.service.password=.*/openmrs.service.password=${openmrs_reports_user_password}/" /etc/bahmni-reports/bahmni-reports.properties
