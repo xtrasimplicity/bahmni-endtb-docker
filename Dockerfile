@@ -45,7 +45,8 @@ RUN chsh -s /sbin/nologin bahmni_support
 ADD artifacts/bin/start_bahmni /usr/sbin/
 RUN chmod u+x /usr/sbin/start_bahmni
 
-RUN yum install -y gettext
+RUN yum install -y gettext && \
+    ln -s /var/www/bahmni_config /var/www/implementation_config
 
 ADD artifacts/bin/update-config /usr/sbin/
 RUN chown root /usr/sbin/update-config && \
