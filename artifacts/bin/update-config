@@ -19,6 +19,24 @@ retrieve_secret_or_use_default() {
     fi
 }
 
+update_config_file() {
+    attribute="$1"
+    new_value="$2"
+    config_file_path="$3"
+
+    sed -i "s/\(${attribute}\)=.*/${attribute}=${new_value}/" "${config_file_path}"
+}
+
+encrypt_openmrs_password() {
+    username="$1"
+    password="$2"
+
+    # Get the salt for this user
+    users_salt=$(mysql -u root openmrs --batch --skip-column-names --execute="SELECT salt FROM users WHERE username = '${username}' OR system_id = '${username}'")
+    
+    echo $(python -c "import hashlib; print(hashlib.sha512(('${password}'+'${users_salt}').encode()).hexdigest())")
+}
+
 # Prepare password variables
 mysql_root_password=`retrieve_secret_or_use_default 'MYSQL_ROOT_PASSWORD' 'password'`
 openmrs_db_password=`retrieve_secret_or_use_default 'OPENMRS_DB_PASSWORD' 'password'`
@@ -37,19 +55,31 @@ until $(echo exit | curl -s telnet://127.0.0.1:3306 > /dev/null); do
    sleep 1;
 done
 
-echo "Updating MySQL credentials..."
+echo "Updating credentials in the MySQL database..."
+reports_service_account_username='admin'
+encrypted_reports_service_account_password=`encrypt_openmrs_password "${reports_service_account_username}" "${openmrs_reports_user_password}"`
+
 mysql -u root <<EOF
   FLUSH PRIVILEGES;
   SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${mysql_root_password}');
   SET PASSWORD FOR 'openmrs-user'@'localhost' = PASSWORD('${openmrs_db_password}');
   SET PASSWORD FOR 'reports-user'@'localhost' = PASSWORD('${reports_db_password}');
+
+  use openmrs;
+  UPDATE users SET password='${encrypted_reports_service_account_password}' WHERE username = '${reports_service_account_username}' OR system_id = '${reports_service_account_username}';
+  UPDATE global_property set property_value='${openmrs_reports_user_password}' where property='scheduler.password';
 EOF
 
-service mysqld stop 2>&1 > /dev/null 
+service mysqld stop 2>&1 > /dev/null
 
 echo "Updating Bahmni configuration files..."
-sed -i "s/^connection.password=.*/connection.password=${openmrs_db_password}/" /etc/openmrs/openmrs-runtime.properties
-sed -i "s/^openelis.password=.*/openelis.password=${openelis_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
-sed -i "s/^openmrs.password=.*/openmrs.password=${openmrs_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
-sed -i "s/^reports.password=.*/reports.password=${reports_db_password}/" /etc/bahmni-reports/bahmni-reports.properties
-sed -i "s/^openmrs.service.password=.*/openmrs.service.password=${openmrs_reports_user_password}/" /etc/bahmni-reports/bahmni-reports.properties
+openmrs_runtime_properties_file=/opt/openmrs/etc/openmrs-runtime.properties
+bahmni_reports_properties_file=/opt/bahmni-reports/etc/bahmni-reports.properties
+
+update_config_file 'connection.password' "${openmrs_db_password}" "${openmrs_runtime_properties_file}"
+
+update_config_file 'openelis.password' "${openelis_db_password}" "${bahmni_reports_properties_file}"
+update_config_file 'openmrs.password' "${openmrs_db_password}" "${bahmni_reports_properties_file}"
+update_config_file 'reports.password' "${reports_db_password}" "${bahmni_reports_properties_file}"
+update_config_file 'openmrs.service.user' "${reports_service_account_username}" "${bahmni_reports_properties_file}"
+update_config_file 'openmrs.service.password' "${openmrs_reports_user_password}" "${bahmni_reports_properties_file}"
