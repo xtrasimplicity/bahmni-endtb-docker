@@ -1,0 +1,29 @@
+#!/bin/bash
+set -eo pipefail
+
+# Ignore Selinux tasks
+echo '---' > /opt/bahmni-installer/bahmni-playbooks/roles/selinux/tasks/main.yml
+
+# Mock SSH server config, to keep the installer happy.
+mkdir -p /etc/ssh
+touch /etc/ssh/sshd_config 
+echo -e '#!/bin/sh\necho "This is a fake SSH service. It does not do anything."' > /etc/init.d/sshd 
+chmod +x /etc/init.d/sshd
+
+# Mock `iptables`, to keep the installer happy.
+mv /sbin/iptables /sbin/iptables-old 
+echo -e '#!/bin/sh\necho "This is not the real iptables. If you *really* need to, you can use /sbin/iptables-old."' > /sbin/iptables 
+chmod +x /sbin/iptables 
+echo -e '#!/bin/sh\necho "This is a fake iptables service. It does not do anything."' > /etc/init.d/iptables 
+chmod +x /etc/init.d/iptables 
+
+yum clean all 
+bahmni -i local install 
+bahmni --implementation_play=/var/www/bahmni_config/playbooks/all.yml -i local install-impl 
+ln -s /etc/bahmni-installer/bahmni.conf /etc/bahmni-installer/bahmni-emr-installer.conf 
+service mysqld start 
+sudo su -s /bin/bash bahmni -c "/usr/bin/bahmni-batch" 
+yum clean all
+
+# Disable the bahmni_support user
+chsh -s /sbin/nologin bahmni_support
